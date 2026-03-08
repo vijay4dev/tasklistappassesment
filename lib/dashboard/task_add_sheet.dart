@@ -245,23 +245,36 @@ class _AddTaskSheetState extends State<AddTaskSheet>
         final selected = _priority == p;
 
         return Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _priority = p),
+          
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 5),
+            child: GestureDetector(
+              onTap: () => setState(() => _priority = p),
+            
+              child: Container(
+                
+                padding: const EdgeInsets.symmetric(vertical: 10),
+            
+                decoration: BoxDecoration(
+                  color: selected && p.name == "high"
+                      ? Colors.red.withOpacity(0.15)
+                      : selected && p.name == "medium"
 
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: selected
-                      ? AppTheme.primaryColor
-                      : Colors.grey.shade300,
+                          ? Colors.orange.withOpacity(0.15)
+                          : selected && p.name == "low"
+                              ? Colors.green.withOpacity(0.15)
+                              : Colors.transparent,
+                  border: Border.all(
+                    color: selected 
+                        ? AppTheme.primaryColor
+                        : Colors.grey.shade300,
+                  ),
+            
+                  borderRadius: BorderRadius.circular(10),
                 ),
-
-                borderRadius: BorderRadius.circular(10),
+            
+                child: Center(child: Text(p.name)),
               ),
-
-              child: Center(child: Text(p.name)),
             ),
           ),
         );
