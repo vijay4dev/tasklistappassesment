@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tasklistapp/app/app_theme.dart';
 import 'package:tasklistapp/auth/auth_services.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'auth/login_screen.dart';
 import 'dashboard/dashboard_screen.dart';
@@ -18,6 +20,15 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await dotenv.load(fileName: ".env");
+
+  // Wakelock initialize karo — screen off pe app chalta rahega
+  await WakelockPlus.enable();
+
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
 
 
   // Supabase initialize karo — iske baad SupabaseService use kar sakte hain
