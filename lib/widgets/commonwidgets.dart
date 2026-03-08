@@ -114,12 +114,14 @@ class AppTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final bool obscure;
+  final String? Function(String?)? validator;
 
   const AppTextField({
     super.key,
     required this.controller,
     required this.label,
     this.obscure = false,
+    this.validator, required bool obscureText, required IconButton suffixIcon,
   });
 
   @override
