@@ -113,15 +113,17 @@ class AppTextField extends StatelessWidget {
 
   final TextEditingController controller;
   final String label;
-  final bool obscure;
+  final bool obscureText;
   final String? Function(String?)? validator;
+  final Widget? suffixIcon;
 
   const AppTextField({
     super.key,
     required this.controller,
     required this.label,
-    this.obscure = false,
-    this.validator, required bool obscureText, required IconButton suffixIcon,
+    this.obscureText = false,
+    this.validator,
+    this.suffixIcon,
   });
 
   @override
@@ -129,10 +131,12 @@ class AppTextField extends StatelessWidget {
 
     return TextFormField(
       controller: controller,
-      obscureText: obscure,
+      obscureText: obscureText,
+      validator: validator,
 
       decoration: InputDecoration(
         labelText: label,
+        suffixIcon: suffixIcon,
       ),
     );
   }
