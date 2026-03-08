@@ -31,6 +31,7 @@ class TaskTile extends StatelessWidget {
         endActionPane: ActionPane(
           motion: const DrawerMotion(),
           extentRatio: 0.45,
+          
 
           children: [
 
@@ -106,7 +107,12 @@ class _TaskCard extends StatelessWidget {
 
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(0),
+          bottomRight: Radius.circular(0),
+          topLeft: Radius.circular(10),
+          bottomLeft: Radius.circular(10),
+        ),
 
         border: Border.all(
           color: task.isCompleted
@@ -116,7 +122,7 @@ class _TaskCard extends StatelessWidget {
       ),
 
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
 
         onTap: () => provider.toggle(task),
 
