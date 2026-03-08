@@ -31,6 +31,11 @@ class TaskProvider extends ChangeNotifier {
 
   int get pending =>
       _tasks.where((t) => !t.isCompleted).length;
+ 
+  double get completedRate =>
+      total == 0 ? 0.0 : completed / total;
+ 
+  TaskFilter get filter => _filter;
 
   // ───── Filter Logic ─────
 
@@ -88,44 +93,52 @@ class TaskProvider extends ChangeNotifier {
   }
 
   // ───── Add Task ─────
-
-  Future<void> addTask(Task task) async {
-
+  Future<bool> addTask({
+    required String title,
+    String? description,
+    String? category,
+    required TaskPriority priority,
+  }) async {
     try {
-
+      final userId = _service.currentUser?.id;
+      if (userId == null) throw Exception("User not logged in");
+ 
+      final task = Task(
+        userId: userId,
+        title: title,
+        description: description,
+        category: category,
+        priority: priority,
+      );
+ 
       final created = await _service.createTask(task);
-
+ 
       _tasks.insert(0, created);
-
       notifyListeners();
-
+      return true;
     } catch (_) {
-
       _error = "Failed to add task";
       notifyListeners();
+      return false;
     }
   }
 
   // ───── Update Task ─────
-
-  Future<void> updateTask(Task task) async {
-
+  Future<bool> updateTask(Task task) async {
     try {
-
       final updated = await _service.updateTask(task);
-
-      final index =
-          _tasks.indexWhere((t) => t.id == task.id);
-
+ 
+      final index = _tasks.indexWhere((t) => t.id == task.id);
+ 
       if (index != -1) {
         _tasks[index] = updated;
         notifyListeners();
       }
-
+      return true;
     } catch (_) {
-
       _error = "Update failed";
       notifyListeners();
+      return false;
     }
   }
 

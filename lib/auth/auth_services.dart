@@ -18,6 +18,13 @@ class AuthService extends ChangeNotifier {
   bool get isLoading => _loading;
   String? get error => _error;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
+  String get userDisplayName {
+    final name = (_user?.userMetadata?['full_name'] as String?);
+    if (name != null && name.trim().isNotEmpty) return name.trim();
+    final email = _user?.email ?? '';
+    final at = email.indexOf('@');
+    return at > 0 ? email.substring(0, at) : (email.isNotEmpty ? email : 'User');
+  }
 
   AuthService() {
     _init();

@@ -1,121 +1,117 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tasklistapp/app/app_theme.dart';
+import 'package:tasklistapp/auth/auth_services.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'auth/login_screen.dart';
+import 'dashboard/dashboard_screen.dart';
+import 'dashboard/task_provider.dart';
+
+
+// ─── main() ──────────────────────────────────────────────────────────────
+Future<void> main() async {
+  // Flutter engine initialize karo — async main ke liye zaroori
+  WidgetsFlutterBinding.ensureInitialized();
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: ".env");
+
+
+  // Supabase initialize karo — iske baad SupabaseService use kar sakte hain
+  await Supabase.initialize(
+    url:     dotenv.env['project_url'] ?? '',
+    anonKey: dotenv.env['anon_key'] ?? '',
+  );
+
+  // App run karo — MultiProvider wrap karke
+  runApp(
+    MultiProvider(
+      // MultiProvider = ek hi jagah multiple providers define karo
+      // Ye sab providers poori app mein available honge
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => TaskProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: const TaskHubApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+// ─── Root App Widget ──────────────────────────────────────────────────────
+class TaskHubApp extends StatelessWidget {
+  const TaskHubApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    // ThemeProvider ko watch karo — theme toggle pe rebuild hoga
+    final themeProvider = context.watch<ThemeProvider>();
+
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      title: 'Mini TaskHub',
+      debugShowCheckedModeBanner: false,
+      theme:     AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeProvider.themeMode, // Provider se current mode lo
+      home: const _AuthGate(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+// ─── Auth Gate ────────────────────────────────────────────────────────────
+// Ye decide karta hai: login screen dikhao ya dashboard
+// AuthService ki status ke hisaab se
+class _AuthGate extends StatelessWidget {
+  const _AuthGate();
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
+    final auth = context.watch<AuthService>();
+
+    return AnimatedSwitcher(
+      // AnimatedSwitcher: jab auth.status badle toh smooth transition
+      duration: const Duration(milliseconds: 400),
+      transitionBuilder: (child, anim) =>
+          FadeTransition(opacity: anim, child: child),
+      child: switch (auth.status) {
+        // Dart 3 switch expression — clean syntax
+        AuthStatus.authenticated   => const DashboardScreen(),
+        AuthStatus.unauthenticated => const LoginScreen(),
+        AuthStatus.unknown         => const _SplashScreen(),
+      },
+    );
+  }
+}
+
+// ─── Splash Screen ────────────────────────────────────────────────────────
+// App start pe briefly dikhta hai jab tak auth status check ho raha hai
+class _SplashScreen extends StatelessWidget {
+  const _SplashScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            CircleAvatar(
+              radius: 40,
+              backgroundColor: AppTheme.primaryColor,
+              child: Icon(Icons.check_circle_outline_rounded,
+                  color: Colors.white, size: 44),
             ),
+            SizedBox(height: 24),
+            Text('TaskHub',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryColor)),
+            SizedBox(height: 32),
+            CircularProgressIndicator(color: AppTheme.primaryColor),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }

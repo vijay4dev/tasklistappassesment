@@ -1,30 +1,94 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:tasklistapp/main.dart';
+import 'package:tasklistapp/dashboard/task_model.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  group('Task Model', () {
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    test('toJson works', () {
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+      final task = Task(
+        id: '1',
+        userId: 'u1',
+        title: 'Buy groceries',
+        status: TaskStatus.pending,
+        priority: TaskPriority.high,
+        createdAt: DateTime(2024,1,1),
+        category: 'Personal',
+      );
+
+      final json = task.toJson();
+
+      expect(json['id'], '1');
+      expect(json['user_id'], 'u1');
+      expect(json['status'], 'pending');
+      expect(json['priority'], 'high');
+      expect(json['completed_at'], isNull);
+    });
+
+    test('fromJson works', () {
+
+      final json = {
+        'id': '1',
+        'user_id': 'u1',
+        'title': 'Task',
+        'description': null,
+        'status': 'completed',
+        'priority': 'medium',
+        'created_at': '2024-01-01T00:00:00.000Z',
+        'completed_at': '2024-01-01T01:00:00.000Z',
+        'category': 'Work',
+      };
+
+      final task = Task.fromJson(json);
+
+      expect(task.id, '1');
+      expect(task.status, TaskStatus.completed);
+      expect(task.isCompleted, true);
+    });
+
+    test('toJson -> fromJson keeps data', () {
+
+      final task = Task(
+        id: 'x',
+        userId: 'u',
+        title: 'Test',
+        createdAt: DateTime(2024,1,1),
+      );
+
+      final restored = Task.fromJson(task.toJson());
+
+      expect(restored.id, task.id);
+      expect(restored.title, task.title);
+    });
+
+    test('invalid status defaults to pending', () {
+
+      final task = Task.fromJson({
+        'id': '1',
+        'user_id': 'u',
+        'title': 'Task',
+        'description': null,
+        'status': 'invalid',
+        'priority': 'medium',
+        'created_at': '2024-01-01T00:00:00.000Z',
+        'completed_at': null,
+        'category': null,
+      });
+
+      expect(task.status, TaskStatus.pending);
+    });
+
+    test('copyWith updates fields', () {
+
+      final task = Task(userId: 'u', title: 'Old');
+
+      final updated = task.copyWith(title: 'New');
+
+      expect(updated.title, 'New');
+      expect(task.title, 'Old'); // original unchanged
+    });
+
+
   });
 }

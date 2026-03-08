@@ -88,6 +88,7 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(title: const Text("Create Account")),
 
       body: Padding(
